@@ -20,4 +20,4 @@ def make_gaussian(n_points: int):
 
 
 def sample_dataset(dataset: Dataset) -> Location:
-    return dataset[0]
+    return dataset[np.random.randint(0, len(dataset))]
