@@ -76,11 +76,11 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(lib, theta_slider, x_init):
-    n_steps = 100
+    n_steps = 25
     vf = lib.vector_field.ConvergingVectorField(theta_slider.value / 100.0)
     traj = lib.ode.solve_for_trajectory_at_timesteps(init_location=x_init, vector_field=vf, timesteps=[i / n_steps for i in range(n_steps)])
     traj
-    return (traj,)
+    return n_steps, traj, vf
 
 
 @app.cell
@@ -101,15 +101,34 @@ def _(np, plt, t_slider, traj):
 
     t = t_slider.value / 100.0
     idx_in_view = np.where(traj.timesteps < t)
-    ts = traj.timesteps[idx_in_view]
+    _ts = traj.timesteps[idx_in_view]
     vals = traj.locations[idx_in_view][:, 0]
 
     fig, ax = plt.subplots()
-    ax.plot(ts, vals)
+    ax.plot(_ts, vals)
     ax.set_xlim((0, 1))
     ax.set_ylim((-2, 2))
     ax
 
+    return (t,)
+
+
+@app.cell
+def _(lib, n_steps, np, plt, t, vf):
+    n_trajectories = 20
+    trajectory_range = (-2, 2)
+    _ts = [i / n_steps for i in range(n_steps)]
+    trajectories = [lib.ode.solve_for_trajectory_at_timesteps(init_location=i/100,vector_field=vf, timesteps=_ts) for i in range(trajectory_range[0]*100, trajectory_range[1] * 100, int((trajectory_range[1] * 100 - trajectory_range[0]*100) / n_trajectories))]
+    _, ax_traj = plt.subplots()
+
+    for _traj in trajectories:
+        _idx_in_view = np.where(_traj.timesteps < t)
+        _ts = _traj.timesteps[_idx_in_view]
+        _vals = _traj.locations[_idx_in_view]
+        ax_traj.plot(_ts, _vals)
+    ax_traj.set_xlim((0, 1))
+    ax_traj.set_ylim((-2, 2))
+    ax_traj
     return
 
 
