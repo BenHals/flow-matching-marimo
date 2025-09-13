@@ -22,13 +22,10 @@ def solve_for_trajectory_at_timesteps(
         _ = full_timesteps.pop(0)
     if full_timesteps[-1] != 1.0:
         full_timesteps.append(1.0)
-    for t_next in timesteps:
-        if t_next == t:
-            continue
-        step_size = t_next - t
-        direction = vector_field.get_vector(x, t)
-        x_next = x + step_size * direction
-        x = x_next
+    for t_next in full_timesteps[1:]:
+        timestep_size = t_next - t
+        velocity = vector_field.get_vector(x, t)
+        x = x + timestep_size * velocity
         t = t_next
         location_path.append(x)
         output_timesteps.append(t)

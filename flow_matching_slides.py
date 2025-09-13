@@ -132,5 +132,62 @@ def _(lib, n_steps, np, plt, t, vf):
     return
 
 
+@app.cell
+def _(lib, mo, np):
+    spiral_trajectories = []
+    init_dataset = lib.data.make_spiral(3, 100)
+    final_dataset = lib.data.make_gaussian(100)
+    _n_steps = 1000
+    spiral_slider = mo.ui.slider(start=1, stop=_n_steps-1, label="timestep")
+    for j in range(100):
+        z = lib.data.sample_dataset(init_dataset)
+        start = lib.data.sample_dataset(final_dataset)
+
+        vector_field = lib.vector_field.GaussianConditionalVectorField(
+            alpha=lib.alpha_beta.AlphaBasic(), beta=lib.alpha_beta.BetaBasic(), z=z
+        )
+
+        trajectory = lib.ode.solve_for_trajectory_at_timesteps(
+            start, vector_field, [i / _n_steps for i in range(_n_steps)]
+        )
+        spiral_trajectories.append(trajectory)
+    spiral_trajectory_locations = np.stack([t.locations for t in spiral_trajectories])
+    spiral_trajectory_locations.shape
+
+    return spiral_slider, spiral_trajectory_locations
+
+
+@app.cell
+def _(plt, spiral_trajectory_locations):
+    spiral_fig, spiral_ax = plt.subplots()
+
+
+    spiral_scatter = spiral_ax.scatter(spiral_trajectory_locations[:, 0, 0], spiral_trajectory_locations[:, 0, 1], animated=True)
+    spiral_ax.set_xlim((-2, 2))
+    spiral_ax.set_ylim((-2, 2))
+    bg = spiral_fig.canvas.copy_from_bbox(spiral_fig.bbox)
+    return spiral_ax, spiral_scatter
+
+
+@app.cell
+def _(spiral_slider):
+
+    spiral_slider
+    return
+
+
+@app.cell
+def _(spiral_ax, spiral_scatter, spiral_slider, spiral_trajectory_locations):
+    spiral_scatter.set_offsets(spiral_trajectory_locations[:, spiral_slider.value])
+    spiral_ax
+
+    return
+
+
+@app.cell
+def _():
+    return
+
+
 if __name__ == "__main__":
     app.run()
