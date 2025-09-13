@@ -138,7 +138,7 @@ def _(lib, mo, np):
     init_dataset = lib.data.make_spiral(3, 100)
     final_dataset = lib.data.make_gaussian(100)
     _n_steps = 1000
-    spiral_slider = mo.ui.slider(start=1, stop=_n_steps-1, label="timestep")
+    spiral_slider = mo.ui.slider(start=1, stop=_n_steps-1, step=5, full_width=True, label="timestep")
     for j in range(100):
         z = lib.data.sample_dataset(init_dataset)
         start = lib.data.sample_dataset(final_dataset)
@@ -165,7 +165,7 @@ def _(plt, spiral_trajectory_locations):
     spiral_scatter = spiral_ax.scatter(spiral_trajectory_locations[:, 0, 0], spiral_trajectory_locations[:, 0, 1], animated=True)
     spiral_ax.set_xlim((-2, 2))
     spiral_ax.set_ylim((-2, 2))
-    bg = spiral_fig.canvas.copy_from_bbox(spiral_fig.bbox)
+    spiral_ax.set_axis_off()
     return spiral_ax, spiral_scatter
 
 
