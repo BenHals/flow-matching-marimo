@@ -24,14 +24,6 @@ class GaussianConditionalVectorField(VectorField):
 
     @override
     def get_vector(self, location: domain.Location, timestep: float) -> domain.Location:
-        # print(f"""
-        #       {self.alpha.get_deriv(timestep)}
-        #     - ({self.beta.get_deriv(timestep)} / {self.beta.get_value(timestep)})
-        #     * {self.alpha.get_value(timestep)}
-        # ) * {self.z} + (
-        #       {self.beta.get_deriv(timestep)} / {self.beta.get_value(timestep)}
-        # ) * {location}
-        #   """)
         return (
             self.alpha.get_deriv(timestep)
             - (self.beta.get_deriv(timestep) / self.beta.get_value(timestep))
