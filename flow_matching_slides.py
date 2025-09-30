@@ -1,7 +1,4 @@
 import marimo
-import marimo as mo
-import numpy as np
-import torch
 
 __generated_with = "0.14.16"
 app = marimo.App(width="medium")
@@ -10,6 +7,7 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     import math
+    from copy import deepcopy
 
     import marimo as mo
     import matplotlib.pyplot as plt
@@ -17,11 +15,12 @@ def _():
     import torch
 
     import lib.data
+    import lib.mnist
     import lib.models
     import lib.ode
     import lib.vector_field
 
-    return lib, mo, np, plt
+    return deepcopy, lib, mo, np, plt, torch
 
 
 @app.cell
@@ -210,7 +209,7 @@ def _(spiral_ax, spiral_scatter, spiral_slider, spiral_trajectory_locations):
 
 
 @app.cell
-def _(lib):
+def _(lib, np, torch):
     xlim = [-1.0, 1.0]
     ylim = [-1.0, 1.0]
     n_grid_points = 25
@@ -253,18 +252,18 @@ def _(lib):
         )
         sim_locations.append(x_next)
 
-    return v_t, timesteps
+    return grid_points, n_timesteps, sim_locations, v_t, xlim, ylim
 
 
 @app.cell
-def _(lib):
+def _(mo, n_timesteps):
     sim_slider = mo.ui.slider(0, n_timesteps - 1, full_width=True)
     sim_slider
-    return
+    return (sim_slider,)
 
 
 @app.cell
-def _(lib):
+def _(grid_points, plt, sim_locations, sim_slider, v_t, xlim, ylim):
     sim_fig, _ax = plt.subplots()
     _ax.quiver(
         grid_points[:, 0],
@@ -279,6 +278,72 @@ def _(lib):
     _ax.set_xlim(xlim)
     _ax.set_ylim(ylim)
     sim_fig
+    return
+
+
+@app.cell(hide_code=True)
+def _(lib, mo):
+    mnist_model = lib.models.load_pretrained_mnist_model()
+    mnist_class = mo.ui.dropdown([*range(10)])
+    mnist_t = mo.ui.slider(0, 50, full_width=True)
+
+    mo.md(f"{mnist_class} \n {mnist_t}")
+
+    return mnist_class, mnist_model, mnist_t
+
+
+@app.cell(hide_code=True)
+def _(deepcopy, mnist_class, mnist_model, np, torch):
+    _n_steps = 50
+    _num_classes = 10
+    classifier_free_guidance_mix = 3.0
+    t_steps = np.linspace(0.0, 1.0, _n_steps + 1)
+    step_size = t_steps[1] - t_steps[0]
+    x_0 = torch.randn((1, 1, 28, 28)).float()
+    _x_t = x_0
+    class_tensor = (
+        torch.tensor([mnist_class.value]) if mnist_class.value is not None else None
+    )
+    null_class = torch.tensor([_num_classes])
+    _x_t_seq = [deepcopy(_x_t)]
+    _v_seq = [torch.zeros_like(_x_t)]
+    for _t in torch.from_numpy(t_steps).float():
+        t_tensor = _t.view(1, 1).float()
+        with torch.no_grad():
+            unconditional_prediction = mnist_model(_x_t, t_tensor, null_class)
+
+            if class_tensor is not None:
+                conditional_prediction = mnist_model(_x_t, t_tensor, class_tensor)
+                pred = unconditional_prediction + classifier_free_guidance_mix * (
+                    conditional_prediction - unconditional_prediction
+                )
+            else:
+                pred = unconditional_prediction
+        _x_t += step_size * pred
+        _x_t_seq.append(deepcopy(_x_t))
+        _v_seq.append(deepcopy(pred))
+
+    mnist_seq = _x_t_seq
+    mnist_vs = _v_seq
+    return mnist_seq, mnist_vs
+
+
+@app.cell
+def _(mnist_seq, mnist_t, mnist_vs, mo, plt):
+    mnist_out = mnist_seq[mnist_t.value]
+    mnist_out_v = mnist_vs[mnist_t.value]
+    _fig, _axes = plt.subplots()
+    _axes.imshow(mnist_out.reshape((28, 28)), cmap="grey")
+    _fig_v, _axes_v = plt.subplots()
+    _axes_v.imshow(mnist_out_v.reshape((28, 28)), cmap="plasma")
+    _axes.axis("off")
+    _axes_v.axis("off")
+
+    mnist_fig = _fig
+    mnist_fig_v = _fig_v
+
+    mo.hstack([mnist_fig, mnist_fig_v])
+
     return
 
 
