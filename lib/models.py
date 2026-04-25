@@ -13,7 +13,7 @@ def load_pretrained_spiral_model():
     weights_path = base_path / "model.pth"
 
     model = FlowModelSimple()
-    model.load_state_dict(torch.load(str(weights_path), weights_only=True))
+    model.load_state_dict(torch.load(str(weights_path), weights_only=True, map_location=torch.device("cpu")))
     model.to("cpu")
     model.eval()
     return model
@@ -23,7 +23,7 @@ def load_pretrained_mnist_model():
     base_path = pathlib.Path("lib/mnist")
     weights_path = base_path / "model.pth"
     model = SimpleConditionalTimeEmbUnet(n_embedding_blocks=2, dim_step_size=32)
-    model.load_state_dict(torch.load(str(weights_path), weights_only=True))
+    model.load_state_dict(torch.load(str(weights_path), weights_only=True, map_location=torch.device("cpu")))
     model.to("cpu")
     model.eval()
     return model
@@ -43,11 +43,11 @@ def load_pretrained_celebA_model():
         group_norm_channels=16,
     )
     latent_encoder.load_state_dict(
-        torch.load(base_latent_model_weights_path, weights_only=True)
+        torch.load(base_latent_model_weights_path, weights_only=True, map_location=torch.device("cpu"))
     )
 
     model = SimpleTimeEmbUnet(n_embedding_blocks=2, dim_step_size=64, image_channels=4)
-    model.load_state_dict(torch.load(base_flow_model_weights_path, weights_only=True))
+    model.load_state_dict(torch.load(base_flow_model_weights_path, weights_only=True, map_location=torch.device("cpu")))
     model.to("cpu")
     model.eval()
     latent_encoder.to("cpu")
